@@ -3,3 +3,12 @@ uvicorn
 python-dotenv
 pydantic
 faiss-cpu
+numpy
+sqlalchemy
+pymysql
+groq
+tavily-python
+sentence-transformers
+python-multipart
+PyPDF2
+python-docx
