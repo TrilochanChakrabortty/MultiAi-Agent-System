@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Copilot</title>
+    <style>
+        body {
+            font-family: Arial;
+            background: #0f172a;
+            color: white;
+            text-align: center;
+        }
+
+        .container {
+            width: 60%;
+            margin: auto;
+            margin-top: 40px;
+        }
+
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            cursor: pointer;
+        }
+
+        #chat {
+            margin-top: 20px;
+            text-align: left;
+            background: #1e293b;
+            padding: 20px;
+            border-radius: 10px;
+            height: 400px;
+            overflow-y: auto;
+        }
+
+        .msg {
+            margin-bottom: 15px;
+        }
+
+        .user {
+            color: #38bdf8;
+        }
+
+        .bot {
+            color: #22c55e;
+        }
+
+        .box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #334155;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h1>🤖 AI Copilot</h1>
+
+    <!-- Upload -->
+    <input type="file" id="file">
+    <button onclick="upload()">Upload</button>
+
+    <br><br>
+
+    <!-- Query -->
+    <input type="text" id="query" placeholder="Ask something..." style="width:70%">
+    <button onclick="ask()">Send</button>
+
+    <div id="chat"></div>
+</div>
+
+<script>
+const API_BASE = "/api/v1";
+let session_id = "user1";   // static for now
+
+function addMessage(text, type) {
+    const chat = document.getElementById("chat");
+    chat.innerHTML += `<div class="msg ${type}">${text}</div>`;
+    chat.scrollTop = chat.scrollHeight;
+}
+
+async function upload() {
+    const file = document.getElementById("file").files[0];
+
+    if (!file) {
+        alert("Select file first");
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("session_id", session_id);
+
+    const res = await fetch(`${API_BASE}/upload`, {
+        method: "POST",
+        body: formData
+    });
+
+    const data = await res.json();
+
+    addMessage("✅ File uploaded", "bot");
+}
+
+async function ask() {
+    const query = document.getElementById("query").value;
+
+    addMessage("You: " + query, "user");
+
+    const res = await fetch(`${API_BASE}/query`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            query: query,
+            session_id: session_id
+        })
+    });
+
+    const data = await res.json();
+
+    const result = data.data.results[0];
+
+    let answerHTML = "<b>Answer:</b><br>" + result.answer.join("<br>");
+
+    let sourcesHTML = "<div class='box'><b>Sources:</b><br>" +
+        (result.sources ? result.sources.join("<br><br>") : "N/A") +
+        "</div>";
+
+    let reasoningHTML = "<div class='box'><b>Reasoning:</b><br>" +
+        "Tool: " + result.tool_used + "<br>" +
+        "Reason: " + result.reason + "<br><br>" +
+        result.steps.join("<br>") +
+        "</div>";
+
+    addMessage(answerHTML + sourcesHTML + reasoningHTML, "bot");
+}
+</script>
+
+</body>
+</html>
